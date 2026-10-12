@@ -1,0 +1,346 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0}[hidden]{display:none!important}</style>
+<title>Tính Giá Net</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Bố cục: thanh đầu navy, bảng so sánh, rồi các thẻ kịch bản xếp 1 cột trên điện thoại, nhiều cột trên máy tính */
+:root{
+  --bg:#f3f5fa; --surface:#ffffff; --surface2:#eceff6; --fg:#14203a; --muted:#566280; --line:#d6dce9;
+  --navy:#1b2a4a; --on-navy:#ffffff; --accent:#c9560a; --accent-soft:#fdeadb; --on-accent:#ffffff;
+  --good:#16794a; --good-soft:#dff3e8; --warn:#9a4a05; --warn-soft:#fdf0d8; --bad:#b42318;
+  --font:'Be Vietnam Pro',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0d1526; --surface:#16213a; --surface2:#1e2b49; --fg:#e8edf7; --muted:#9aa6c0; --line:#2b3a5c;
+    --navy:#1f3158; --on-navy:#ffffff; --accent:#f08a3c; --accent-soft:#3a2614; --on-accent:#1a1006;
+    --good:#52d19a; --good-soft:#12382a; --warn:#f2b04d; --warn-soft:#3a2d12; --bad:#ff8a7a;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1526; --surface:#16213a; --surface2:#1e2b49; --fg:#e8edf7; --muted:#9aa6c0; --line:#2b3a5c;
+  --navy:#1f3158; --on-navy:#ffffff; --accent:#f08a3c; --accent-soft:#3a2614; --on-accent:#1a1006;
+  --good:#52d19a; --good-soft:#12382a; --warn:#f2b04d; --warn-soft:#3a2d12; --bad:#ff8a7a;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:15px;line-height:1.45;padding-inline:0;padding-block:0}
+.top{background:var(--navy);color:var(--on-navy);padding:18px 16px 20px}
+.top-in{max-width:1180px;margin:0 auto}
+.top h1{margin:0;font-size:22px;font-weight:700;letter-spacing:-.01em;text-wrap:balance}
+.top p{margin:4px 0 0;font-size:13px;opacity:.82;max-width:60ch}
+main{max-width:1180px;margin:0 auto;padding:16px;display:flex;flex-direction:column;gap:16px}
+.note{font-size:13px;color:var(--muted);background:var(--surface2);border-radius:10px;padding:10px 12px}
+.note b{color:var(--fg);font-weight:600}
+/* so sánh */
+.sum{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.sum-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.sum h2{margin:0;font-size:15px;font-weight:700}
+.rank{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
+.rank li{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:4px 10px;align-items:center;padding:9px 10px;border-radius:10px;background:var(--surface2)}
+.rank li.best{background:var(--good-soft)}
+.rk{font-family:var(--mono);font-weight:600;font-size:13px;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:var(--surface);color:var(--fg)}
+.best .rk{background:var(--good);color:var(--surface)}
+.rn{min-width:0;overflow-wrap:anywhere;font-weight:600;font-size:14px}
+.rn small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+.rv{text-align:right;font-family:var(--mono);font-weight:600;font-size:14px;font-variant-numeric:tabular-nums}
+.rv small{display:block;font-family:var(--font);font-weight:500;font-size:12px;color:var(--muted)}
+.best .rv small{color:var(--good)}
+.hint{font-size:12.5px;color:var(--muted);margin:0}
+/* thẻ */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:14px;align-items:start}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.card-h{display:flex;align-items:center;gap:8px}
+.badge{flex:none;width:26px;height:26px;border-radius:8px;background:var(--navy);color:var(--on-navy);font-family:var(--mono);font-weight:600;font-size:13px;display:grid;place-items:center}
+.name{flex:1;min-width:0;border:0;border-bottom:1px dashed var(--line);background:transparent;color:var(--fg);font:600 15px var(--font);padding:4px 2px;border-radius:0}
+.name:focus{outline:none;border-bottom-color:var(--accent)}
+.lnk{flex:none;border:0;background:none;color:var(--accent);font:600 13px var(--font);padding:6px 4px;cursor:pointer;border-radius:6px}
+.lnk.del{color:var(--bad)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.f{display:flex;flex-direction:column;gap:4px;min-width:0}
+.f>span:first-child{font-size:12px;color:var(--muted);font-weight:500;line-height:1.25}
+.in{display:flex;align-items:center;background:var(--surface2);border:1px solid transparent;border-radius:9px;padding:0 10px;min-width:0}
+.in:focus-within{border-color:var(--accent);background:var(--surface)}
+.in input{flex:1;min-width:0;width:100%;border:0;background:transparent;color:var(--fg);font:500 15px var(--mono);padding:10px 0;outline:none;font-variant-numeric:tabular-nums}
+.in i{font-style:normal;color:var(--muted);font-size:13px;padding-left:6px}
+.full{grid-column:1/-1}
+.blk{border:1px solid var(--line);border-radius:11px;padding:10px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.blk-h{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.blk-h b{font-size:13.5px}
+.seg{display:inline-flex;background:var(--surface2);border-radius:8px;padding:2px}
+.seg button{border:0;background:transparent;color:var(--muted);font:600 12.5px var(--font);padding:5px 10px;border-radius:6px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--fg);box-shadow:0 0 0 1px var(--line)}
+.conv{font-size:12.5px;color:var(--muted)}
+.conv b{font-family:var(--mono);color:var(--fg)}
+.res{background:var(--accent-soft);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.res-lab{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);font-weight:700}
+.big{font-family:var(--mono);font-weight:600;font-size:30px;line-height:1.1;font-variant-numeric:tabular-nums;color:var(--fg);overflow-wrap:anywhere}
+.big small{font-size:15px;font-weight:500;margin-left:3px}
+.mid{font-family:var(--mono);font-weight:600;font-size:17px;font-variant-numeric:tabular-nums}
+.mid small{font-size:13px;font-weight:500}
+.row2{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.pill{display:inline-block;font-size:12.5px;font-weight:600;padding:3px 9px;border-radius:99px;background:var(--surface);color:var(--fg)}
+.warn{font-size:12.5px;color:var(--warn);background:var(--warn-soft);border-radius:8px;padding:7px 9px}
+details{font-size:13px}
+summary{cursor:pointer;color:var(--muted);font-weight:600;padding:2px 0}
+.tbl{width:100%;border-collapse:collapse;margin-top:6px}
+.tbl td{padding:5px 0;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl td:last-child{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap;padding-left:10px}
+.tbl tr.t td{font-weight:700;border-bottom:0}
+.btn{border:0;border-radius:9px;background:var(--navy);color:var(--on-navy);font:600 13.5px var(--font);padding:9px 14px;cursor:pointer}
+.btn.alt{background:var(--surface2);color:var(--fg)}
+.row-btn{display:flex;gap:8px;flex-wrap:wrap}
+.add{border:1.5px dashed var(--line);border-radius:14px;background:transparent;color:var(--accent);font:600 14px var(--font);min-height:96px;cursor:pointer;padding:12px}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.copybox{display:none;flex-direction:column;gap:6px}
+.copybox.on{display:flex}
+.copybox textarea{width:100%;min-height:150px;background:var(--surface2);color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:10px;font:13px var(--mono)}
+.toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:9px 16px;border-radius:99px;font-size:13.5px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+</style>
+
+<header class="top"><div class="top-in">
+  <h1>Giá net sau mọi ưu đãi</h1>
+  <p>Điền giá bán buôn và các tỷ lệ. Kết quả tính theo cùng đơn vị với giá bạn nhập (hộp hoặc viên). Đặt nhiều thẻ cạnh nhau để so sánh các chương trình.</p>
+</div></header>
+
+<main>
+  <div class="note"><b>Cách dùng:</b> mỗi thẻ là một chương trình hoặc một nhà cung cấp. Điền giá bán buôn, số lượng và các ưu đãi, ô nào không có thì để trống. Số tiền gõ dấu chấm làm phân cách nghìn, dấu phẩy làm thập phân (ví dụ 108.000 hoặc 6,5). Số liệu chỉ tính trên thiết bị của bạn, không gửi đi đâu.</div>
+  <section class="sum" id="sum" aria-live="polite"></section>
+  <div class="cards" id="cards"></div>
+  <section class="copybox" id="copybox"><p class="hint">Trình duyệt chặn sao chép tự động. Chọn và sao chép đoạn dưới đây.</p><textarea id="copyta" readonly></textarea></section>
+</main>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+// ---- PHẦN TÍNH (công thức v1.4) ----
+/*CALC_START*/
+function parseNum(s, money){
+  s = String(s == null ? '' : s).trim();
+  if(!s) return 0;
+  if(money){
+    if(s.indexOf(',') >= 0){ s = s.replace(/\./g,'').replace(',','.'); }
+    else if(/^\d{1,3}(\.\d{3})+$/.test(s)){ s = s.replace(/\./g,''); }
+  } else { s = s.replace(',','.'); }
+  var n = parseFloat(s);
+  return isFinite(n) ? n : 0;
+}
+function condPct(c, mode, pct, req, gift){
+  if(c[mode] === 'gift'){
+    var r = parseNum(c[req], true), g = parseNum(c[gift], true);
+    return r > 0 ? (g / r) * 100 : 0;
+  }
+  return parseNum(c[pct], false);
+}
+function calc(c){
+  var price = parseNum(c.price, true), vat = parseNum(c.vat, false) / 100;
+  var sb = parseNum(c.sb, true), st = parseNum(c.st, true);
+  var ckn = parseNum(c.ckn, false) / 100, hd = parseNum(c.hd, false) / 100;
+  var ckTT = parseNum(c.tt, false) / 100;
+  var tl = condPct(c, 'tlMode', 'tl', 'tlReq', 'tlGift') / 100;
+  var kc = condPct(c, 'kcMode', 'kc', 'kcReq', 'kcGift') / 100;
+  var dstb = price * sb * (1 - ckn);
+  var invoice = dstb * (1 + vat);
+  var pay = invoice * (1 - ckTT);
+  var bHd = dstb * hd, bTl = dstb * tl, bKc = dstb * kc;
+  var bonus = bHd + bTl + bKc;
+  var paid = pay - bonus;
+  var recv = sb + st;
+  if(!(recv > 0) || !(price > 0)) return null;
+  var netAfter = paid / recv;
+  var netBefore = netAfter / (1 + vat);
+  var listAfter = price * (1 + vat);
+  return {price:price, vat:vat, sb:sb, st:st, recv:recv, dstb:dstb, invoice:invoice, pay:pay,
+    bHd:bHd, bTl:bTl, bKc:bKc, pHd:hd, pTl:tl, pKc:kc, bonus:bonus, paid:paid,
+    netAfter:netAfter, netBefore:netBefore, listAfter:listAfter, cut:1 - netAfter / listAfter, tlReq:parseNum(c.tlReq,true), kcReq:parseNum(c.kcReq,true)};
+}
+/*CALC_END*/
+
+// ---- GIAO DIỆN ----
+var nf = new Intl.NumberFormat('vi-VN', {maximumFractionDigits: 2});
+var nf0 = new Intl.NumberFormat('vi-VN', {maximumFractionDigits: 0});
+function fm(n){ return nf.format(n); }
+function f0(n){ return nf0.format(n); }
+function fp(n){ return nf.format(n * 100) + '%'; }
+function esc(s){ return String(s).replace(/[&<>"]/g, function(m){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]; }); }
+
+var seq = 0;
+function blank(name){
+  return {id: ++seq, name: name || 'Kịch bản', price:'', vat:'5', sb:'', st:'', ckn:'', hd:'',
+    tlMode:'pct', tl:'', tlReq:'', tlGift:'', kcMode:'pct', kc:'', kcReq:'', kcGift:'', tt:''};
+}
+var cards = [];
+(function seed(){
+  cards = [blank('Kịch bản 1'), blank('Kịch bản 2')];
+})();
+
+function field(c, k, label, suffix, money, full){
+  return '<label class="f' + (full ? ' full' : '') + '"><span>' + label + '</span><span class="in"><input id="' + k + '-' + c.id + '" inputmode="decimal" autocomplete="off" data-id="' + c.id + '" data-k="' + k + '" data-m="' + (money ? 1 : 0) + '" placeholder="0" value="' + esc(c[k]) + '"><i>' + suffix + '</i></span></label>';
+}
+function condBlock(c, title, mk, pk, rk, gk){
+  var gift = c[mk] === 'gift';
+  return '<div class="blk"><div class="blk-h"><b>' + title + '</b><span class="seg" role="group" aria-label="' + title + '">' +
+    '<button type="button" data-id="' + c.id + '" data-mode="' + mk + '" data-v="pct" aria-pressed="' + (!gift) + '">Nhập %</button>' +
+    '<button type="button" data-id="' + c.id + '" data-mode="' + mk + '" data-v="gift" aria-pressed="' + gift + '">Theo quà</button></span></div>' +
+    (gift
+      ? '<div class="grid">' + field(c, rk, 'Doanh số yêu cầu', 'đ', true) + field(c, gk, 'Trị giá quà', 'đ', true) + '</div><div class="conv" data-conv="' + mk + '-' + c.id + '"></div>'
+      : '<div class="grid">' + field(c, pk, 'Tỷ lệ', '%', false) + '</div>') + '</div>';
+}
+function cardHTML(c, i){
+  return '<article class="card" data-card="' + c.id + '">' +
+    '<div class="card-h"><span class="badge">' + (i + 1) + '</span><input class="name" id="name-' + c.id + '" data-id="' + c.id + '" data-k="name" value="' + esc(c.name) + '" aria-label="Tên kịch bản" maxlength="60">' +
+    '<button type="button" class="lnk" data-act="dup" data-id="' + c.id + '">Nhân bản</button><button type="button" class="lnk del" data-act="del" data-id="' + c.id + '">Xóa</button></div>' +
+    '<div class="grid">' +
+      field(c, 'price', 'Giá bán buôn (chưa VAT)', 'đ', true) + field(c, 'vat', 'VAT', '%', false) +
+      field(c, 'sb', 'SL bán', '', true) + field(c, 'st', 'SL tặng', '', true) +
+      field(c, 'ckn', 'CK ngay', '%', false) + field(c, 'hd', 'CK hợp đồng', '%', false) +
+    '</div>' +
+    condBlock(c, 'CK tích lũy', 'tlMode', 'tl', 'tlReq', 'tlGift') +
+    condBlock(c, 'Kích cầu', 'kcMode', 'kc', 'kcReq', 'kcGift') +
+    '<div class="grid">' + field(c, 'tt', 'CK thanh toán (tính sau VAT)', '%', false, true) + '</div>' +
+    '<div class="res" data-res="' + c.id + '"></div>' +
+    '<div class="row-btn"><button type="button" class="btn alt" data-act="copy" data-id="' + c.id + '">Sao chép gửi Zalo</button></div>' +
+  '</article>';
+}
+function build(){
+  var h = cards.map(cardHTML).join('');
+  h += '<button type="button" class="add" id="add">+ Thêm kịch bản so sánh</button>';
+  document.getElementById('cards').innerHTML = h;
+  update();
+}
+function resHTML(c, r){
+  if(!r) return '<div class="res-lab">Giá net</div><div class="hint">Nhập giá bán buôn và số lượng để xem kết quả.</div>';
+  var warn = '';
+  if(r.paid <= 0) warn = '<div class="warn">Tổng ưu đãi lớn hơn số tiền phải trả. Kiểm tra lại các tỷ lệ.</div>';
+  else {
+    if(c.tlMode === 'gift' && r.tlReq > 0 && r.dstb < r.tlReq) warn += '<div class="warn">Doanh số thực bán ' + f0(r.dstb) + 'đ chưa đạt doanh số yêu cầu tích lũy (thiếu ' + f0(r.tlReq - r.dstb) + 'đ). Kết quả vẫn tính theo số bạn điền.</div>';
+    if(c.kcMode === 'gift' && r.kcReq > 0 && r.dstb < r.kcReq) warn += '<div class="warn">Doanh số thực bán ' + f0(r.dstb) + 'đ chưa đạt doanh số yêu cầu kích cầu (thiếu ' + f0(r.kcReq - r.dstb) + 'đ). Kết quả vẫn tính theo số bạn điền.</div>';
+  }
+  function row(l, v, t){ return '<tr' + (t ? ' class="t"' : '') + '><td>' + l + '</td><td>' + v + '</td></tr>'; }
+  var d = '<table class="tbl">' +
+    row('Doanh số thực bán (sau CK ngay)', f0(r.dstb) + 'đ') +
+    row('Tiền hóa đơn (+VAT ' + fp(r.vat) + ')', f0(r.invoice) + 'đ') +
+    row('Tiền thanh toán (sau CK thanh toán)', f0(r.pay) + 'đ') +
+    (r.pHd > 0 ? row('− CK hợp đồng ' + fp(r.pHd), f0(r.bHd) + 'đ') : '') +
+    (r.pTl > 0 ? row('− Tích lũy ' + fp(r.pTl), f0(r.bTl) + 'đ') : '') +
+    (r.pKc > 0 ? row('− Kích cầu ' + fp(r.pKc), f0(r.bKc) + 'đ') : '') +
+    row('Khách trả thực', f0(r.paid) + 'đ', true) +
+    row('Số lượng nhận (bán + tặng)', nf.format(r.recv)) + '</table>';
+  return '<div class="res-lab">Giá net sau VAT</div>' +
+    '<div class="big">' + fm(r.netAfter) + '<small>đ</small></div>' +
+    '<div class="row2"><span>Giá net trước VAT</span><span class="mid">' + fm(r.netBefore) + '<small>đ</small></span></div>' +
+    '<div><span class="pill">Giảm ' + fm(r.cut * 100) + '% so giá bán buôn có VAT</span></div>' +
+    warn + '<details><summary>Chi tiết tính</summary>' + d + '</details>';
+}
+function update(){
+  var out = [];
+  cards.forEach(function(c, i){
+    var r = calc(c);
+    var el = document.querySelector('[data-res="' + c.id + '"]');
+    if(el) el.innerHTML = resHTML(c, r);
+    ['tl','kc'].forEach(function(p){
+      var cv = document.querySelector('[data-conv="' + p + 'Mode-' + c.id + '"]');
+      if(cv){
+        var rq = parseNum(c[p + 'Req'], true), g = parseNum(c[p + 'Gift'], true);
+        cv.innerHTML = rq > 0 ? 'Quy đổi: ' + fm(g) + ' ÷ ' + fm(rq) + ' = <b>' + fm(g / rq * 100) + '%</b>' : 'Quy đổi: nhập doanh số yêu cầu để tính %';
+      }
+    });
+    if(r) out.push({i:i, c:c, r:r});
+  });
+  renderSum(out);
+}
+function renderSum(out){
+  var s = document.getElementById('sum');
+  if(out.length < 2){
+    s.innerHTML = '<div class="sum-head"><h2>So sánh</h2></div><p class="hint">Thêm ít nhất hai kịch bản có đủ giá và số lượng để xếp hạng.</p>';
+    return;
+  }
+  var sorted = out.slice().sort(function(a, b){ return b.r.cut - a.r.cut; });
+  var best = sorted[0];
+  var samePrice = sorted.every(function(x){ return Math.abs(x.r.price - best.r.price) < 1e-9 && Math.abs(x.r.vat - best.r.vat) < 1e-9; });
+  var h = '<div class="sum-head"><h2>So sánh ' + sorted.length + ' kịch bản</h2><button type="button" class="btn alt" data-act="copyall">Sao chép bảng so sánh</button></div><ol class="rank">';
+  sorted.forEach(function(x, k){
+    var diff = '';
+    if(k === 0) diff = 'Tốt nhất';
+    else if(samePrice) diff = '+' + fm(x.r.netAfter - best.r.netAfter) + 'đ so với tốt nhất';
+    else diff = '−' + fm((best.r.cut - x.r.cut) * 100) + ' điểm % so với tốt nhất';
+    h += '<li class="' + (k === 0 ? 'best' : '') + '"><span class="rk">' + (k + 1) + '</span><span class="rn">' + esc(x.c.name) + '<small>Thẻ ' + (x.i + 1) + ', trước VAT ' + fm(x.r.netBefore) + 'đ</small></span><span class="rv">' + fm(x.r.netAfter) + 'đ<small>' + diff + '</small></span></li>';
+  });
+  h += '</ol><p class="hint">' + (samePrice ? 'Xếp theo giá net sau VAT, cùng giá bán buôn và VAT.' : 'Giá bán buôn hoặc VAT khác nhau, nên xếp theo % giảm so giá bán buôn có VAT.') + '</p>';
+  s.innerHTML = h;
+  s._sorted = sorted;
+}
+function textFor(c, r){
+  var L = [];
+  L.push(c.name);
+  L.push('Giá bán buôn ' + fm(r.price) + 'đ (chưa VAT), VAT ' + fp(r.vat));
+  L.push('Bán ' + nf.format(r.sb) + ', tặng ' + nf.format(r.st) + ', nhận ' + nf.format(r.recv));
+  var p = [];
+  var ckn = parseNum(c.ckn, false), tt = parseNum(c.tt, false);
+  if(ckn) p.push('CK ngay ' + fm(ckn) + '%');
+  if(r.pHd) p.push('CK hợp đồng ' + fp(r.pHd));
+  if(r.pTl) p.push('Tích lũy ' + fp(r.pTl));
+  if(r.pKc) p.push('Kích cầu ' + fp(r.pKc));
+  if(tt) p.push('CK thanh toán ' + fm(tt) + '%');
+  if(p.length) L.push(p.join(', '));
+  L.push('Giá net sau VAT: ' + fm(r.netAfter) + 'đ');
+  L.push('Giá net trước VAT: ' + fm(r.netBefore) + 'đ');
+  L.push('Giảm ' + fm(r.cut * 100) + '% so giá bán buôn có VAT');
+  return L.join('\n');
+}
+function toast(msg){
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('on');
+  clearTimeout(toast._t); toast._t = setTimeout(function(){ t.classList.remove('on'); }, 1800);
+}
+function copyText(txt){
+  var box = document.getElementById('copybox'), ta = document.getElementById('copyta');
+  function fallback(){
+    ta.value = txt; box.classList.add('on'); ta.focus(); ta.select();
+    var ok = false; try { ok = document.execCommand('copy'); } catch(e){}
+    if(ok){ box.classList.remove('on'); toast('Đã sao chép, dán vào Zalo hoặc tin nhắn'); }
+    else { toast('Chọn đoạn văn bản bên dưới để sao chép'); box.scrollIntoView({block:'nearest'}); }
+  }
+  try {
+    navigator.clipboard.writeText(txt).then(function(){ box.classList.remove('on'); toast('Đã sao chép, dán vào Zalo hoặc tin nhắn'); }, fallback);
+  } catch(e){ fallback(); }
+}
+
+document.addEventListener('input', function(e){
+  var el = e.target; if(!el.dataset || !el.dataset.k) return;
+  var c = cards.find(function(x){ return String(x.id) === el.dataset.id; }); if(!c) return;
+  c[el.dataset.k] = el.value; update();
+});
+document.addEventListener('click', function(e){
+  var b = e.target.closest('button'); if(!b) return;
+  var id = b.dataset.id, c = cards.find(function(x){ return String(x.id) === id; });
+  if(b.id === 'add'){
+    if(cards.length >= 6){ toast('Tối đa 6 kịch bản'); return; }
+    var n = blank('Kịch bản ' + (cards.length + 1));
+    if(cards.length){ var last = cards[cards.length - 1]; n.price = last.price; n.vat = last.vat; }
+    cards.push(n); build(); return;
+  }
+  if(b.dataset.mode && c){ c[b.dataset.mode] = b.dataset.v; build(); return; }
+  if(b.dataset.act === 'dup' && c){
+    if(cards.length >= 6){ toast('Tối đa 6 kịch bản'); return; }
+    var cp = JSON.parse(JSON.stringify(c)); cp.id = ++seq; cp.name = c.name + ' (bản sao)';
+    cards.splice(cards.indexOf(c) + 1, 0, cp); build(); return;
+  }
+  if(b.dataset.act === 'del' && c){ cards.splice(cards.indexOf(c), 1); build(); return; }
+  if(b.dataset.act === 'copy' && c){
+    var r = calc(c); if(!r){ toast('Nhập giá và số lượng trước'); return; }
+    copyText(textFor(c, r)); return;
+  }
+  if(b.dataset.act === 'copyall'){
+    var s = document.getElementById('sum')._sorted; if(!s) return;
+    copyText(s.map(function(x, k){ return (k + 1) + '. ' + x.c.name + ': net sau VAT ' + fm(x.r.netAfter) + 'đ, trước VAT ' + fm(x.r.netBefore) + 'đ, giảm ' + fm(x.r.cut * 100) + '%'; }).join('\n')); return;
+  }
+});
+build();
+</script>
+
+</body></html>
